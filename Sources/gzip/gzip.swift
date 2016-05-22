@@ -1,0 +1,5 @@
+import Czlib
+
+struct gzip {
+
+}
