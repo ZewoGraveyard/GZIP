@@ -7,7 +7,7 @@
 [![Blog](https://img.shields.io/badge/blog-honzadvorsky.com-green.svg)](http://honzadvorsky.com)
 [![Twitter Czechboy0](https://img.shields.io/badge/twitter-czechboy0-green.svg)](http://twitter.com/czechboy0)
 
-> Compress and uncompress gzip data from Swift
+> gzip data compression from Swift
 
 # Installation
 
