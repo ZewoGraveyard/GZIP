@@ -5,6 +5,8 @@ import Foundation
 private let CHUNK_SIZE: Int = 2 ^ 14
 private let STREAM_SIZE: Int32 = Int32(sizeof(z_stream))
 
+//inspire by https://github.com/1024jp/NSData-GZIP/blob/master/Sources/NSData%2BGZIP.swift, but we'll probably get rid of the Foundation types (or maybe create APIs that use them too? to avoid copying?)
+
 public struct gzip {
     
     public static func compress(data: Data) throws -> NSData {
