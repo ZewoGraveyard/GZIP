@@ -48,7 +48,7 @@ public protocol Gzippable {
 extension NSData: Gzippable {
     
     public func gzipCompressed() throws -> NSData {
-        return try autoreleasepool {
+        return try autoreleasepoolIfAvailable {
             guard self.length > 0 else { return NSData() }
 
             var stream = makeStream()
@@ -85,7 +85,7 @@ extension NSData: Gzippable {
     }
     
     public func gzipUncompressed() throws -> NSData {
-        return try autoreleasepool {
+        return try autoreleasepoolIfAvailable {
             guard self.length > 0 else { return NSData() }
             
             var stream = self.makeStream()

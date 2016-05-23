@@ -60,7 +60,7 @@ class gzipTests: XCTestCase {
     
 //    func testNoLeaks_NSData() throws {
 //        for _ in 0..<100 {
-//            try autoreleasepool {
+//            try autoreleasepoolIfAvailable {
 //                let inputString = Array(repeating: "hello world ", count: 100000).joined(separator: ", ")
 //                let input = inputString.toData()
 //                let output = try input.gzipCompressed()
@@ -74,7 +74,7 @@ class gzipTests: XCTestCase {
 //    
 //    func testNoLeaks_Data() throws {
 //        for _ in 0..<100 {
-//            try autoreleasepool {
+//            try autoreleasepoolIfAvailable {
 //                let inputString = Array(repeating: "hello world ", count: 100000).joined(separator: ", ")
 //                let input = inputString.data
 //                let output = try input.gzipCompressed()
