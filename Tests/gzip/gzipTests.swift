@@ -38,6 +38,20 @@ class gzipTests: XCTestCase {
         XCTAssertEqual(recoveredString, inputString)
     }
     
+    func testUncompressGzip_Fixture() throws {
+        let data = NSData(base64Encoded: "H4sICElFQ1cAA2ZpbGUudHh0AMtIzcnJVyjPL8pJUUjLz1dISiwC00DMBQBN/m/HHAAAAA==", options: [])!
+        let output = try data.gzipUncompressed()
+        let outputString = output.toString()
+        XCTAssertEqual(outputString, "hello world foo bar foo foo\n")
+    }
+    
+    func testCompressGzip_Fixture() throws {
+        let data = "hello world foo bar foo foo\n".data(using: NSUTF8StringEncoding)!
+        let output = try data.gzipCompressed()
+        let outputString = output.base64EncodedString([])
+        XCTAssertEqual(outputString, "H4sIAAAAAAAAA8tIzcnJVyjPL8pJUUjLz1dISiwC00DMBQBN/m/HHAAAAA==")
+    }
+    
     #if os(Linux)
     //TODO: once a snapshot after 05-09 gets released, remove this as
     //performance tests are already implemented in corelibs-xctest (just not
@@ -112,7 +126,9 @@ extension gzipTests {
 			("testCompressAndUncompress_NSData", testCompressAndUncompress_NSData),
 			("testEmpty", testEmpty),
 			("testDecompress_IncorrectData", testDecompress_IncorrectData),
-			("testCompressAndUncompress_C7Data", testCompressAndUncompress_C7Data)
+			("testCompressAndUncompress_C7Data", testCompressAndUncompress_C7Data),
+			("testUncompressGzip_Fixture", testUncompressGzip_Fixture),
+			("testCompressGzip_Fixture", testCompressGzip_Fixture)
         ]
         #if os(Linux)
             //TODO: once a snapshot after 05-09 gets released, remove this as
