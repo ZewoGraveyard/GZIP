@@ -9,6 +9,21 @@
 
 > gzip data compression from Swift
 
+# Usage
+Works on `NSData` and `C7.Data`, or anything [`Gzippable`](https://github.com/czechboy0/gzip/blob/master/Sources/gzip/gzip%2BNSData.swift#L42-46)
+
+```swift
+let myData = ... //NSData or C7.Data
+let myGzipCompressedData = try myData.gzipCompressed() //NSData or C7.Data
+...
+let myGzipUncompressedData = try myGzipCompressedData.gzipUncompressed() //NSData or C7.Data
+... //PROFIT!
+```
+
+# Details
+
+As this library uses a SwiftPM-compatible source of [zlib](https://github.com/czechboy0/zlib), you don't need to install anything manually before using it. Even though both OS X and Linux have a preinstalled version of `zlib`, unfortunately each has a different version, making its potential use inconsistent. In our case everything is compiled from source, so you can be sure to get the same results everywher. :100:
+
 # Installation
 
 ## Swift Package Manager
