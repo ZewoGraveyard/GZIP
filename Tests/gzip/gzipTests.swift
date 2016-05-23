@@ -38,6 +38,11 @@ class gzipTests: XCTestCase {
         XCTAssertEqual(recoveredString, inputString)
     }
     
+    #if os(Linux)
+    //TODO: once a snapshot after 05-09 gets released, remove this as
+    //performance tests are already implemented in corelibs-xctest (just not
+    //yet released)
+    #else
     func testPerformance_NSData() throws {
         let inputString = Array(repeating: "hello world ", count: 100000).joined(separator: ", ")
         let input: NSData = inputString.toData()
@@ -57,6 +62,7 @@ class gzipTests: XCTestCase {
             _ = try! output.gzipUncompressed()
         }
     }
+    #endif
     
 //    func testNoLeaks_NSData() throws {
 //        for _ in 0..<100 {
@@ -102,13 +108,22 @@ extension NSData {
 
 extension gzipTests {
 	static var allTests : [(String, (gzipTests) -> () throws -> Void)] {
-		return [
+		var all = [
 			("testCompressAndUncompress_NSData", testCompressAndUncompress_NSData),
 			("testEmpty", testEmpty),
 			("testDecompress_IncorrectData", testDecompress_IncorrectData),
-			("testCompressAndUncompress_C7Data", testCompressAndUncompress_C7Data),
-			("testPerformance_NSData", testPerformance_NSData),
-			("testPerformance_C7Data", testPerformance_C7Data)
-		]
+			("testCompressAndUncompress_C7Data", testCompressAndUncompress_C7Data)
+        ]
+        #if os(Linux)
+            //TODO: once a snapshot after 05-09 gets released, remove this as
+            //performance tests are already implemented in corelibs-xctest (just not
+            //yet released)
+        #else
+            all += [
+                ("testPerformance_NSData", testPerformance_NSData),
+                ("testPerformance_C7Data", testPerformance_C7Data)
+            ]
+        #endif
+        return all
 	}
 }
