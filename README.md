@@ -1,6 +1,6 @@
 # gzip
 
-[![Build Status](https://travis-ci.org/czechboy0/gzip.svg?branch=master)](https://travis-ci.org/czechboy0/gzip)
+[![Build Status](https://travis-ci.org/Zewo/gzip.svg?branch=master)](https://travis-ci.org/Zewo/gzip)
 ![Platforms](https://img.shields.io/badge/platforms-Linux%20%7C%20OS%20X-blue.svg)
 ![Package Managers](https://img.shields.io/badge/package%20managers-SwiftPM-yellow.svg)
 
@@ -22,14 +22,14 @@ let myGzipUncompressedData = try myGzipCompressedData.gzipUncompressed() //NSDat
 
 # Details
 
-As this library uses a SwiftPM-compatible source of [zlib](https://github.com/czechboy0/zlib), you don't need to install anything manually before using it. Even though both OS X and Linux have a preinstalled version of `zlib`, unfortunately each has a different version, making its potential use inconsistent. In our case everything is compiled from source, so you can be sure to get the same results everywhere. :100:
+As this library uses a SwiftPM-compatible source of [zlib](https://github.com/Zewo/zlib), you don't need to install anything manually before using it. Even though both OS X and Linux have a preinstalled version of `zlib`, unfortunately each has a different version, making its potential use inconsistent. In our case everything is compiled from source, so you can be sure to get the same results everywhere. :100:
 
 # Installation
 
 ## Swift Package Manager
 
 ```swift
-.Package(url: "https://github.com/czechboy0/gzip.git", majorVersion: 0, minor: 1)
+.Package(url: "https://github.com/Zewo/gzip.git", majorVersion: 0, minor: 1)
 ```
 
 :gift_heart: Contributing
