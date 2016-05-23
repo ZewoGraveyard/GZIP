@@ -22,7 +22,7 @@ let myGzipUncompressedData = try myGzipCompressedData.gzipUncompressed() //NSDat
 
 # Details
 
-As this library uses a SwiftPM-compatible source of [zlib](https://github.com/czechboy0/zlib), you don't need to install anything manually before using it. Even though both OS X and Linux have a preinstalled version of `zlib`, unfortunately each has a different version, making its potential use inconsistent. In our case everything is compiled from source, so you can be sure to get the same results everywher. :100:
+As this library uses a SwiftPM-compatible source of [zlib](https://github.com/czechboy0/zlib), you don't need to install anything manually before using it. Even though both OS X and Linux have a preinstalled version of `zlib`, unfortunately each has a different version, making its potential use inconsistent. In our case everything is compiled from source, so you can be sure to get the same results everywhere. :100:
 
 # Installation
 
