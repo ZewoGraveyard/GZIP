@@ -16,9 +16,14 @@
 ```swift
 .Package(url: "https://github.com/czechboy0/gzip.git", majorVersion: 0, minor: 1)
 ```
+
 :gift_heart: Contributing
 ------------
 Please create an issue with a description of your problem or open a pull request with a fix.
+
+:+1: Thanks
+------
+This project was initially inspired by [NSData+GZIP](https://github.com/1024jp/NSData-GZIP), thank you!
 
 :v: License
 -------
@@ -27,3 +32,4 @@ MIT
 :alien: Author
 ------
 Honza Dvorsky - http://honzadvorsky.com, [@czechboy0](http://twitter.com/czechboy0)
+
