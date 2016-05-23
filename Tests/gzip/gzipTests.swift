@@ -96,13 +96,13 @@ class gzipTests: XCTestCase {
 
 extension String {
     func toData() -> NSData {
-        return self.data(using: NSUTF8StringEncoding)!
+        return self.data(using: NSUTF8StringEncoding) ?? NSData()
     }
 }
 
 extension NSData {
     func toString() -> String {
-        return String(data: self, encoding: NSUTF8StringEncoding)!
+        return String(data: self, encoding: NSUTF8StringEncoding) ?? ""
     }
 }
 
