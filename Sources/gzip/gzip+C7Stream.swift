@@ -1,7 +1,7 @@
 import C7
 import Foundation
 
-public final class GzipStream: Stream {
+public final class GzipStream: ReceivingStream {
     
     private let rawStream: Stream
     private let processor: GzipProcessor
@@ -21,34 +21,29 @@ public final class GzipStream: Stream {
         } catch StreamError.closedStream(let data) {
             chunk = data
         }
-        
+
+        if processor.closed {
+            throw GzipError.Unknown(message: "Gzip stream already closed", code: 10)
+        }
+
+        let isLast = rawStream.closed || processor.closed
         let nsChunk = chunk.toNSDataCopyBytes()
-        let output = try processor
-            .process(data: nsChunk)
+        let outputNSData = try processor
+            .process(data: nsChunk, isLast: isLast)
+        let output = outputNSData
             .toC7DataCopyBytes()
-        if processor.closed || rawStream.closed {
-            self.closed = true
+        
+        if rawStream.closed {
+            processor.close()
+            closed = true
         }
         return output
     }
-    
-    public func send(_ data: Data, timingOut deadline: Double) throws {
-        let nsChunk = data.toNSDataCopyBytes()
-        let output = try processor
-            .process(data: nsChunk)
-            .toC7DataCopyBytes()
-        if processor.closed || rawStream.closed {
-            self.closed = true
-        }
-        try rawStream.send(output, timingOut: deadline)
-    }
-    
-    public func flush(timingOut deadline: Double) throws {
-        try rawStream.flush(timingOut: deadline)
-    }
-    
+        
     public func close() throws {
+        processor.close()
         try rawStream.close()
+        self.closed = true
     }
 }
 

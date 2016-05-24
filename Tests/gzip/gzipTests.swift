@@ -68,6 +68,16 @@ class gzipTests: XCTestCase {
         XCTAssertEqual(outputString, "hello world foo bar foo foo\n")
     }
     
+    func testStream_Compress_C7Data() throws {
+        let inputData = "hello world foo bar foo foo\n".data
+        let sourceStream = Drain(for: inputData)
+        let outStream = try GzipStream(rawStream: sourceStream, mode: .compress)
+        let outData = Drain(for: outStream).data
+        let outputString = outData.toNSDataCopyBytes().base64EncodedString([])
+        XCTAssertEqual(outputString, "H4sIAAAAAAAAA8tIzcnJVyjPL8pJUUjLz1dISiwC00DMBQBN/m/HHAAAAA==")
+    }
+
+    
     #if os(Linux)
     //TODO: once a snapshot after 05-09 gets released, remove this as
     //performance tests are already implemented in corelibs-xctest (just not
@@ -78,20 +88,29 @@ class gzipTests: XCTestCase {
 //        let inputString = Array(repeating: "hello world ", count: 100000).joined(separator: ", ")
 //        let input: NSData = inputString.toData()
 //        
-//        measure {
+////        measure {
 //            let output = try! input.gzipCompressed()
 //            _ = try! output.gzipUncompressed()
-//        }
+////        }
 //    }
-//
+    
+//    func testPerformance_Stream_Identity() throws {
+//        let inputString = Array(repeating: "hello world ", count: 100000).joined(separator: ", ")
+//        let input = Drain(for: inputString.data)
+//        let compressStream = try GzipStream(rawStream: input, mode: .compress)
+//        let uncompressStream = try GzipStream(rawStream: compressStream, mode: .uncompress)
+//        let outputString = String(Drain(for: uncompressStream).data)
+//        XCTAssertEqual(inputString, outputString)
+//    }
+
 //    func testPerformance_C7Data() throws {
 //        let inputString = Array(repeating: "hello world ", count: 100000).joined(separator: ", ")
 //        let input: C7.Data = inputString.data
 //        
-//        measure {
+////        measure {
 //            let output = try! input.gzipCompressed()
 //            _ = try! output.gzipUncompressed()
-//        }
+////        }
 //    }
     #endif
     

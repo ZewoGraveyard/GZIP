@@ -19,10 +19,12 @@ public protocol Gzippable {
     func gzipUncompressed() throws -> DataType
 }
 
-protocol GzipProcessor {
+protocol GzipProcessor: class {
     func initialize() throws
-    func process(data: NSData) throws -> NSData
-    var closed: Bool { get }
+    func process(data: NSData, isLast: Bool) throws -> NSData
+    func close()
+    var closed: Bool { get set }
+    var _stream: UnsafeMutablePointer<z_stream> { get }
 }
 
 private let CHUNK_SIZE: Int = 2 ^ 14
@@ -49,9 +51,14 @@ public enum GzipError: ErrorProtocol {
     /// An unknown error occurred.
     case Unknown(message: String, code: Int)
     
-    internal init(code: Int32, message cmessage: UnsafePointer<CChar>)
+    internal init(code: Int32, message cmessage: UnsafePointer<CChar>?)
     {
-        let message =  String(validatingUTF8: cmessage) ?? "unknown gzip error"
+        let message: String
+        if let cmessage = cmessage, let msg = String(validatingUTF8: cmessage) {
+            message = msg
+        } else {
+            message = "unknown gzip error"
+        }
         switch code {
         case Z_STREAM_ERROR: self = .Stream(message: message)
         case Z_DATA_ERROR: self = .Data(message: message)
