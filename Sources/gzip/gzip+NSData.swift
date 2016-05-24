@@ -25,7 +25,7 @@ public enum GzipError: ErrorProtocol {
     /// An unknown error occurred.
     case Unknown(message: String, code: Int)
     
-    private init(code: Int32, message cmessage: UnsafePointer<CChar>)
+    internal init(code: Int32, message cmessage: UnsafePointer<CChar>)
     {
         let message =  String(validatingUTF8: cmessage) ?? "unknown gzip error"
         switch code {
@@ -45,6 +45,28 @@ public protocol Gzippable {
     func gzipUncompressed() throws -> DataType
 }
 
+internal struct gzip {
+    
+    internal static func makeStream(raw: UnsafeMutablePointer<Bytef>, length: uInt) -> z_stream {
+        return z_stream(
+            next_in: raw,
+            avail_in: length,
+            total_in: 0,
+            next_out: nil,
+            avail_out: 0,
+            total_out: 0,
+            msg: nil,
+            state: nil,
+            zalloc: nil,
+            zfree: nil,
+            opaque: nil,
+            data_type: 0,
+            adler: 0,
+            reserved: 0
+        )
+    }
+}
+
 extension NSData: Gzippable {
     
     public func gzipCompressed() throws -> NSData {
@@ -56,7 +78,7 @@ extension NSData: Gzippable {
                 &stream,
                 Z_DEFAULT_COMPRESSION,
                 Z_DEFLATED,
-                MAX_WBITS + 16,
+                MAX_WBITS + 16, //+16 to specify gzip header
                 MAX_MEM_LEVEL,
                 Z_DEFAULT_STRATEGY,
                 ZLIB_VERSION,
@@ -89,7 +111,12 @@ extension NSData: Gzippable {
             guard self.length > 0 else { return NSData() }
             
             var stream = self.makeStream()
-            var result = inflateInit2_(&stream, MAX_WBITS + 32, ZLIB_VERSION, STREAM_SIZE)
+            var result = inflateInit2_(
+                &stream,
+                MAX_WBITS + 32,
+                ZLIB_VERSION,
+                STREAM_SIZE
+            )
             
             guard result == Z_OK else {
                 throw GzipError(code: result, message: stream.msg)
@@ -118,21 +145,7 @@ extension NSData: Gzippable {
     
     private func makeStream() -> z_stream {
         let raw = UnsafeMutablePointer<Bytef>(self.bytes)
-        return z_stream(
-            next_in: raw,
-            avail_in: uInt(self.length),
-            total_in: 0,
-            next_out: nil,
-            avail_out: 0,
-            total_out: 0,
-            msg: nil,
-            state: nil,
-            zalloc: nil,
-            zfree: nil,
-            opaque: nil,
-            data_type: 0,
-            adler: 0,
-            reserved: 0
-        )
+        let length = uInt(self.length)
+        return gzip.makeStream(raw: raw, length: length)
     }
 }

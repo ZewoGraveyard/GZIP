@@ -52,6 +52,15 @@ class gzipTests: XCTestCase {
         XCTAssertEqual(outputString, "H4sIAAAAAAAAA8tIzcnJVyjPL8pJUUjLz1dISiwC00DMBQBN/m/HHAAAAA==")
     }
     
+    func testStream_Uncompress_C7Data() throws {
+        let inputData = "H4sICElFQ1cAA2ZpbGUudHh0AMtIzcnJVyjPL8pJUUjLz1dISiwC00DMBQBN/m/HHAAAAA==".fromBase64toC7Data()
+        let sourceStream = Drain(for: inputData)
+        let outStream = try GzipUncompressingStream(rawStream: sourceStream)
+        let outData = Drain(for: outStream).data
+        let outputString = String(outData)
+        XCTAssertEqual(outputString, "hello world foo bar foo foo\n")
+    }
+    
     #if os(Linux)
     //TODO: once a snapshot after 05-09 gets released, remove this as
     //performance tests are already implemented in corelibs-xctest (just not
@@ -111,6 +120,10 @@ class gzipTests: XCTestCase {
 extension String {
     func toData() -> NSData {
         return self.data(using: NSUTF8StringEncoding) ?? NSData()
+    }
+    
+    func fromBase64toC7Data() -> Data {
+        return NSData(base64Encoded: self, options: [])!.toC7DataCopyBytes()
     }
 }
 
