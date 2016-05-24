@@ -26,7 +26,14 @@ class gzipTests: XCTestCase {
     func testDecompress_IncorrectData() throws {
         let inputString = "foo"
         let input = inputString.toData()
-        XCTAssertThrowsError(try input.gzipUncompressed())
+        do {
+            try input.gzipUncompressed()
+        } catch GzipError.Data(message: let message) {
+            //all good
+            XCTAssertEqual(message, "incorrect header check")
+            return
+        }
+        XCTFail("Should have thrown")
     }
 
     func testCompressAndUncompress_C7Data() throws {
@@ -55,7 +62,7 @@ class gzipTests: XCTestCase {
     func testStream_Uncompress_C7Data() throws {
         let inputData = "H4sICElFQ1cAA2ZpbGUudHh0AMtIzcnJVyjPL8pJUUjLz1dISiwC00DMBQBN/m/HHAAAAA==".fromBase64toC7Data()
         let sourceStream = Drain(for: inputData)
-        let outStream = try GzipUncompressingStream(rawStream: sourceStream)
+        let outStream = try GzipStream(rawStream: sourceStream, mode: .uncompress)
         let outData = Drain(for: outStream).data
         let outputString = String(outData)
         XCTAssertEqual(outputString, "hello world foo bar foo foo\n")
@@ -66,25 +73,26 @@ class gzipTests: XCTestCase {
     //performance tests are already implemented in corelibs-xctest (just not
     //yet released)
     #else
-    func testPerformance_NSData() throws {
-        let inputString = Array(repeating: "hello world ", count: 100000).joined(separator: ", ")
-        let input: NSData = inputString.toData()
-        
-        measure {
-            let output = try! input.gzipCompressed()
-            _ = try! output.gzipUncompressed()
-        }
-    }
-
-    func testPerformance_C7Data() throws {
-        let inputString = Array(repeating: "hello world ", count: 100000).joined(separator: ", ")
-        let input: C7.Data = inputString.data
-        
-        measure {
-            let output = try! input.gzipCompressed()
-            _ = try! output.gzipUncompressed()
-        }
-    }
+    //TODO: reinstate these performance tests
+//    func testPerformance_NSData() throws {
+//        let inputString = Array(repeating: "hello world ", count: 100000).joined(separator: ", ")
+//        let input: NSData = inputString.toData()
+//        
+//        measure {
+//            let output = try! input.gzipCompressed()
+//            _ = try! output.gzipUncompressed()
+//        }
+//    }
+//
+//    func testPerformance_C7Data() throws {
+//        let inputString = Array(repeating: "hello world ", count: 100000).joined(separator: ", ")
+//        let input: C7.Data = inputString.data
+//        
+//        measure {
+//            let output = try! input.gzipCompressed()
+//            _ = try! output.gzipUncompressed()
+//        }
+//    }
     #endif
     
 //    func testNoLeaks_NSData() throws {
@@ -148,10 +156,10 @@ extension gzipTests {
             //performance tests are already implemented in corelibs-xctest (just not
             //yet released)
         #else
-            all += [
-                ("testPerformance_NSData", testPerformance_NSData),
-                ("testPerformance_C7Data", testPerformance_C7Data)
-            ]
+//            all += [
+//                ("testPerformance_NSData", testPerformance_NSData),
+//                ("testPerformance_C7Data", testPerformance_C7Data)
+//            ]
         #endif
         return all
 	}
