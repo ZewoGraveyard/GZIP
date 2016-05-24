@@ -2,7 +2,6 @@ import Foundation
 import Czlib
 
 private let CHUNK_SIZE: Int = 16384
-//private let CHUNK_SIZE: Int = 16
 private let STREAM_SIZE: Int32 = Int32(sizeof(z_stream))
 
 final class GzipUncompressor: GzipProcessor {
@@ -27,10 +26,12 @@ final class GzipUncompressor: GzipProcessor {
     }
     
     func process(data: NSData, isLast: Bool) throws -> NSData {
-        let processChunk: @noescape () -> Int32 = { return inflate(&_stream.pointee, Z_FINISH) }
-        let shouldEnd: @noescape (result: Int32) -> Bool = { $0 == Z_STREAM_END }
+        let mode = isLast ? Z_FINISH : Z_SYNC_FLUSH
+        let processChunk: @noescape () -> Int32 = { return inflate(&_stream.pointee, mode) }
+        let loop: @noescape (result: Int32) -> Bool = { _ in _stream.pointee.avail_in > 0 }
+        let shouldEnd: @noescape (result: Int32) -> Bool = { _ in isLast }
         let end: @noescape () -> () = { inflateEnd(&_stream.pointee) }
-        return try self._process(data: data, processChunk: processChunk, shouldEnd: shouldEnd, end: end)
+        return try self._process(data: data, processChunk: processChunk, loop: loop, shouldEnd: shouldEnd, end: end)
     }
     
     func close() {
@@ -42,7 +43,7 @@ final class GzipUncompressor: GzipProcessor {
     
     deinit {
         close()
-        _stream.deinitialize()
+        _clearMemory()
     }
 }
 
@@ -74,9 +75,10 @@ final class GzipCompressor: GzipProcessor {
     func process(data: NSData, isLast: Bool) throws -> NSData {
         let mode = isLast ? Z_FINISH : Z_SYNC_FLUSH
         let processChunk: @noescape () -> Int32 = { return deflate(&_stream.pointee, mode) }
+        let loop: @noescape (result: Int32) -> Bool = { _ in _stream.pointee.avail_out == 0 }
         let shouldEnd: @noescape (result: Int32) -> Bool = { _ in isLast }
         let end: @noescape () -> () = { deflateEnd(&_stream.pointee) }
-        return try self._process(data: data, processChunk: processChunk, shouldEnd: shouldEnd, end: end)
+        return try self._process(data: data, processChunk: processChunk, loop: loop, shouldEnd: shouldEnd, end: end)
     }
 
     func close() {
@@ -88,21 +90,28 @@ final class GzipCompressor: GzipProcessor {
     
     deinit {
         close()
+        _clearMemory()
     }
 }
 
 func _makeStream() -> UnsafeMutablePointer<z_stream> {
     
     let stream = z_stream(next_in: nil, avail_in: 0, total_in: 0, next_out: nil, avail_out: 0, total_out: 0, msg: nil, state: nil, zalloc: nil, zfree: nil, opaque: nil, data_type: 0, adler: 0, reserved: 0)
-    let ptr = UnsafeMutablePointer<z_stream>.init(allocatingCapacity: sizeof(z_stream))
+    let ptr = UnsafeMutablePointer<z_stream>(allocatingCapacity: 1)
     ptr.initialize(with: stream)
     return ptr
 }
 
 extension GzipProcessor {
     
+    func _clearMemory() {
+        _stream.deinitialize(count: 1)
+        _stream.deallocateCapacity(1)
+    }
+    
     func _process(data: NSData,
                   processChunk: @noescape () -> Int32,
+                  loop: @noescape (result: Int32) -> Bool,
                   shouldEnd: @noescape (result: Int32) -> Bool,
                   end: @noescape () -> ()) throws -> NSData {
         guard data.length > 0 else { return NSData() }
@@ -115,27 +124,27 @@ extension GzipProcessor {
             throw GzipError.Memory(message: "Not enough memory")
         }
         output.length = CHUNK_SIZE
-        let rawOutput = UnsafeMutablePointer<Bytef>(output.mutableBytes)
         
-        _stream.pointee.next_out = rawOutput
-        let writtenStart = _stream.pointee.total_out
+        let chunkStart = _stream.pointee.total_out
         
         var result: Int32 = 0
-        while true {
+        repeat {
             
-            _stream.pointee.avail_out = uInt(CHUNK_SIZE)
+            if _stream.pointee.total_out >= uLong(output.length) {
+                output.length += CHUNK_SIZE;
+            }
+            
+            let writtenThisChunk = _stream.pointee.total_out - chunkStart
+            let availOut = uLong(output.length) - writtenThisChunk
+            _stream.pointee.avail_out = uInt(availOut)
+            _stream.pointee.next_out = UnsafeMutablePointer<Bytef>(output.mutableBytes).advanced(by: Int(writtenThisChunk))
+            
             result = processChunk()
-
-            if result < 0 {
+            guard result >= 0 || (result == Z_BUF_ERROR && _stream.pointee.avail_out == 0) else {
                 throw GzipError(code: result, message: _stream.pointee.msg)
             }
             
-            if _stream.pointee.avail_in > 0 {
-                output.length += CHUNK_SIZE
-            } else {
-                break
-            }
-        }
+        } while loop(result: result)
         
         guard result == Z_STREAM_END || result == Z_OK else {
             throw GzipError.Stream(message: "Wrong result code \(result)")
@@ -144,8 +153,8 @@ extension GzipProcessor {
             end()
             closed = true
         }
-        let writtenCount = _stream.pointee.total_out - writtenStart
-        output.length = Int(writtenCount)
+        let chunkCount = _stream.pointee.total_out - chunkStart
+        output.length = Int(chunkCount)
         return output
     }
 }

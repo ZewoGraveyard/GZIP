@@ -3,12 +3,12 @@ import Foundation
 
 public final class GzipStream: ReceivingStream {
     
-    private let rawStream: Stream
+    private let rawStream: ReceivingStream
     private let processor: GzipProcessor
     
     public var closed: Bool = false
     
-    public init(rawStream: Stream, mode: GzipMode) throws {
+    public init(rawStream: ReceivingStream, mode: GzipMode) throws {
         self.rawStream = rawStream
         self.processor = mode.processor()
         try self.processor.initialize()

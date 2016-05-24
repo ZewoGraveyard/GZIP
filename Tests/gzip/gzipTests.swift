@@ -4,7 +4,7 @@ import Foundation
 @testable import gzip
 
 class gzipTests: XCTestCase {
-    
+        
     func testCompressAndUncompress_NSData() throws {
         let inputString = "hello world hello world hello world hello world hello errbody"
         let input = inputString.toData()
@@ -76,7 +76,17 @@ class gzipTests: XCTestCase {
         let outputString = outData.toNSDataCopyBytes().base64EncodedString([])
         XCTAssertEqual(outputString, "H4sIAAAAAAAAA8tIzcnJVyjPL8pJUUjLz1dISiwC00DMBQBN/m/HHAAAAA==")
     }
-
+    
+    func testLarge_Stream_Identity() throws {
+        let inputString = Array(repeating: "hello world ", count: 3000).joined(separator: ", ")
+        let inputData = inputString.data
+        let input = Drain(for: inputData)
+        let compressStream = try GzipStream(rawStream: input, mode: .compress)
+        let uncompressStream = try GzipStream(rawStream: compressStream, mode: .uncompress)
+        let outputData = Drain(for: uncompressStream).data
+        let outputString = String(outputData)
+        XCTAssertEqual(inputString, outputString)
+    }
     
     #if os(Linux)
     //TODO: once a snapshot after 05-09 gets released, remove this as
@@ -84,34 +94,25 @@ class gzipTests: XCTestCase {
     //yet released)
     #else
     //TODO: reinstate these performance tests
-//    func testPerformance_NSData() throws {
-//        let inputString = Array(repeating: "hello world ", count: 100000).joined(separator: ", ")
-//        let input: NSData = inputString.toData()
-//        
-////        measure {
-//            let output = try! input.gzipCompressed()
-//            _ = try! output.gzipUncompressed()
-////        }
-//    }
+    func testPerformance_NSData() throws {
+        let inputString = Array(repeating: "hello world ", count: 100000).joined(separator: ", ")
+        let input: NSData = inputString.toData()
+        
+        measure {
+            let output = try! input.gzipCompressed()
+            _ = try! output.gzipUncompressed()
+        }
+    }
     
-//    func testPerformance_Stream_Identity() throws {
-//        let inputString = Array(repeating: "hello world ", count: 100000).joined(separator: ", ")
-//        let input = Drain(for: inputString.data)
-//        let compressStream = try GzipStream(rawStream: input, mode: .compress)
-//        let uncompressStream = try GzipStream(rawStream: compressStream, mode: .uncompress)
-//        let outputString = String(Drain(for: uncompressStream).data)
-//        XCTAssertEqual(inputString, outputString)
-//    }
-
-//    func testPerformance_C7Data() throws {
-//        let inputString = Array(repeating: "hello world ", count: 100000).joined(separator: ", ")
-//        let input: C7.Data = inputString.data
-//        
-////        measure {
-//            let output = try! input.gzipCompressed()
-//            _ = try! output.gzipUncompressed()
-////        }
-//    }
+    func testPerformance_C7Data() throws {
+        let inputString = Array(repeating: "hello world ", count: 100000).joined(separator: ", ")
+        let input: C7.Data = inputString.data
+        
+        measure {
+            let output = try! input.gzipCompressed()
+            _ = try! output.gzipUncompressed()
+        }
+    }
     #endif
     
 //    func testNoLeaks_NSData() throws {
@@ -168,17 +169,20 @@ extension gzipTests {
 			("testDecompress_IncorrectData", testDecompress_IncorrectData),
 			("testCompressAndUncompress_C7Data", testCompressAndUncompress_C7Data),
 			("testUncompressGzip_Fixture", testUncompressGzip_Fixture),
-			("testCompressGzip_Fixture", testCompressGzip_Fixture)
+			("testCompressGzip_Fixture", testCompressGzip_Fixture),
+			("testStream_Uncompress_C7Data", testStream_Uncompress_C7Data),
+			("testStream_Compress_C7Data", testStream_Compress_C7Data),
+			("testLarge_Stream_Identity", testLarge_Stream_Identity)
         ]
         #if os(Linux)
             //TODO: once a snapshot after 05-09 gets released, remove this as
             //performance tests are already implemented in corelibs-xctest (just not
             //yet released)
         #else
-//            all += [
-//                ("testPerformance_NSData", testPerformance_NSData),
-//                ("testPerformance_C7Data", testPerformance_C7Data)
-//            ]
+            all += [
+                ("testPerformance_NSData", testPerformance_NSData),
+                ("testPerformance_C7Data", testPerformance_C7Data)
+            ]
         #endif
         return all
 	}
