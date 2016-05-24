@@ -37,7 +37,7 @@ As this library uses a SwiftPM-compatible source of [zlib](https://github.com/Ze
 ## Swift Package Manager
 
 ```swift
-.Package(url: "https://github.com/Zewo/gzip.git", majorVersion: 0, minor: 1)
+.Package(url: "https://github.com/Zewo/gzip.git", majorVersion: 0, minor: 2)
 ```
 
 :gift_heart: Contributing
