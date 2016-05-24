@@ -20,6 +20,14 @@ let myGzipUncompressedData = try myGzipCompressedData.gzipUncompressed() //NSDat
 ... //PROFIT!
 ```
 
+Also contains a `GzipStream` class which conforms to `C7.ReceivingStream`, so it can be easily attached in a pipeline, like
+
+```swift
+let gzippedStream = ... //e.g. from S4.Body
+let uncompressedStream = try GzipStream(rawStream: gzippedStream, mode: .uncompress)
+... //PROFIT!
+```
+
 # Details
 
 As this library uses a SwiftPM-compatible source of [zlib](https://github.com/Zewo/zlib), you don't need to install anything manually before using it. Even though both OS X and Linux have a preinstalled version of `zlib`, unfortunately each has a different version, making its potential use inconsistent. In our case everything is compiled from source, so you can be sure to get the same results everywhere. :100:
