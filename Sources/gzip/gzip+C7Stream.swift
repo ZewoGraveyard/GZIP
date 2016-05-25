@@ -27,11 +27,11 @@ public final class GzipStream: ReceivingStream {
         }
 
         let isLast = rawStream.closed || processor.closed
-        let nsChunk = chunk.toNSDataCopyBytes()
+        let nsChunk = chunk.toNSData()
         let outputNSData = try processor
             .process(data: nsChunk, isLast: isLast)
         let output = outputNSData
-            .toC7DataCopyBytes()
+            .toC7Data()
         
         if rawStream.closed {
             processor.close()

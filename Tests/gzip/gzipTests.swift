@@ -73,7 +73,7 @@ class gzipTests: XCTestCase {
         let sourceStream = Drain(for: inputData)
         let outStream = try GzipStream(rawStream: sourceStream, mode: .compress)
         let outData = Drain(for: outStream).data
-        let outputString = outData.toNSDataCopyBytes().base64EncodedString([])
+        let outputString = outData.toNSData().base64EncodedString([])
         XCTAssertEqual(outputString, "H4sIAAAAAAAAA8tIzcnJVyjPL8pJUUjLz1dISiwC00DMBQBN/m/HHAAAAA==")
     }
     
@@ -132,7 +132,7 @@ class gzipTests: XCTestCase {
 //    func testNoLeaks_Data() throws {
 //        for _ in 0..<100 {
 //            try autoreleasepoolIfAvailable {
-//                let inputString = Array(repeating: "hello world ", count: 100000).joined(separator: ", ")
+//                let inputString = Array(repeating: "hello world ", count: 10000).joined(separator: ", ")
 //                let input = inputString.data
 //                let output = try input.gzipCompressed()
 //                let recoveredInput = try output.gzipUncompressed()
@@ -142,7 +142,36 @@ class gzipTests: XCTestCase {
 //            }
 //        }
 //    }
-
+    
+//    func testNoCopying_toNSData() throws {
+//        let inputString = Array(repeating: "hello world ", count: 1000000).joined(separator: ", ")
+//        for _ in 0..<100 {
+//            func yo() -> NSData {
+//                let input = inputString.data
+//                sleep(1)
+//                return input.toNSData()
+//            }
+//            let dat = yo()
+//            sleep(1)
+//            print("bump")
+//        }
+//    }
+    
+//    func testNoCopying_toC7Data() throws {
+//        let inputString = Array(repeating: "hello world ", count: 1000000).joined(separator: ", ")
+//        for _ in 0..<100 {
+//            func yo() -> C7.Data {
+//                return autoreleasepoolIfAvailable {
+//                    let input = inputString.data(using: NSUTF8StringEncoding)!
+//                    sleep(1)
+//                    return input.toC7DataCopyBytes()
+//                }
+//            }
+//            let dat = yo()
+//            sleep(1)
+//            print("bump")
+//        }
+//    }
 }
 
 extension String {
@@ -151,7 +180,7 @@ extension String {
     }
     
     func fromBase64toC7Data() -> Data {
-        return NSData(base64Encoded: self, options: [])!.toC7DataCopyBytes()
+        return NSData(base64Encoded: self, options: [])!.toC7Data()
     }
 }
 

@@ -5,16 +5,16 @@ extension Data: Gzippable {
     
     public func gzipCompressed() throws -> Data {
         return try self
-            .toNSDataCopyBytes()
+            .toNSData()
             .gzipCompressed()
-            .toC7DataCopyBytes()
+            .toC7Data()
     }
     
     public func gzipUncompressed() throws -> Data {
         return try self
-            .toNSDataCopyBytes()
+            .toNSData()
             .gzipUncompressed()
-            .toC7DataCopyBytes()
+            .toC7Data()
     }
 }
 
@@ -22,38 +22,29 @@ extension Data: Gzippable {
 // between C7.Data and NSData. Right now we err on the side of caution,
 // doing a bit more copying, but we know there are no leaks/crashes.
 
+
+// WIP: Still makes a copy, but there's gotta be a way to not have to make it
+
 extension NSData {
-    
-    // Safe, copies bytes, so pretty slow.
-    func toC7DataCopyBytes() -> C7.Data {
-        return Data(Array(UnsafeBufferPointer(start: UnsafePointer<UInt8>(self.bytes), count: self.length)))
-    }
-    
-    //TODO: find a way to hand over the data to C7.Data but making sure
-    //the bytes don't get deallocated when NSData goes away.
-    //Some CFRetain maybe? We need to avoid the copying.
-    func toC7DataNoCopyBytes() -> C7.Data {
-        let count = self.length
-        var array = Array(repeating: UInt8(0), count: count)
-        self.getBytes(&array, length:count)
-        return Data(array)
+    func toC7Data() -> C7.Data {
+        let start = UnsafePointer<UInt8>(self.bytes)
+        let bytes = UnsafeBufferPointer<UInt8>(start: start, count: self.length)
+        let array = Array<UInt8>(bytes) // <-- How do I stop this from copying?
+        let data = Data(array)
+        return data
     }
 }
 
 extension C7.Data {
-    
-    // Safe, copies bytes, so pretty slow.
-    func toNSDataCopyBytes() -> NSData {
-        return NSData(bytes: self.bytes, length: self.count)
-    }
-    
-    // Potentially unsafe, only use if the lifetime of the returned NSData
-    // will be strictly shorter than self
-    func toNSDataNoCopyBytes() -> NSData {
-        let mutable = UnsafeMutablePointer<UInt8>(self.bytes)
-        //don't dealloc when NSData goes away, as the lifetime of the encapsulating
-        //data is strictly greater than of this temporary wrapper
-        return NSData(bytesNoCopy: mutable, length: self.count, freeWhenDone: false)
+    func toNSData() -> NSData {
+        
+        // This version does *not* make a copy, so it basically toll-free & is still safe
+        let bytes = self.bytes
+        let mutable = UnsafeMutablePointer<UInt8>(bytes)
+        return NSData(bytesNoCopy: mutable, length: bytes.count, freeWhenDone: false)
+        
+        // Copying version below, just in case of issues
+        //return NSData(bytes: bytes, length: bytes.count)
     }
 }
 
