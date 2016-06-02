@@ -32,7 +32,7 @@ Also contains a `S4` compatible `Middleware`, which automatically adds the right
 
 ```swift
 let client = HTTPSClient.Client("https://my.server")
-let response = client.get("/compressed", middleware: Gzip())
+let response = client.get("/compressed", middleware: GzipMiddleware())
 response.body.becomeBuffer() //<- Already decompressed data
 ```
 

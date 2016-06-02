@@ -4,7 +4,7 @@ public enum GzipMiddlewareError: ErrorProtocol {
     case unsupportedStreamType
 }
 
-public struct Gzip: Middleware {
+public struct GzipMiddleware: Middleware {
     
     public init() { }
     
