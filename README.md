@@ -28,6 +28,14 @@ let uncompressedStream = try GzipStream(rawStream: gzippedStream, mode: .uncompr
 ... //PROFIT!
 ```
 
+Also contains a `S4` compatible `Middleware`, which automatically adds the right headers to the request and decompresses the response if it's compressed.
+
+```swift
+let client = HTTPSClient.Client("https://my.server")
+let response = client.get("/compressed", middleware: Gzip())
+response.body.becomeBuffer() //<- Already decompressed data
+```
+
 # Details
 
 As this library uses a SwiftPM-compatible source of [zlib](https://github.com/Zewo/zlib), you don't need to install anything manually before using it. Even though both OS X and Linux have a preinstalled version of `zlib`, unfortunately each has a different version, making its potential use inconsistent. In our case everything is compiled from source, so you can be sure to get the same results everywhere. :100:
@@ -37,7 +45,7 @@ As this library uses a SwiftPM-compatible source of [zlib](https://github.com/Ze
 ## Swift Package Manager
 
 ```swift
-.Package(url: "https://github.com/Zewo/gzip.git", majorVersion: 0, minor: 2)
+.Package(url: "https://github.com/Zewo/gzip.git", majorVersion: 0, minor: 3)
 ```
 
 :gift_heart: Contributing
