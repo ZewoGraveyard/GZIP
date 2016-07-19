@@ -4,7 +4,7 @@ import Foundation
 @testable import gzip
 
 class gzipTests: XCTestCase {
-        
+
     func testCompressAndUncompress_NSData() throws {
         let inputString = "hello world hello world hello world hello world hello errbody"
         let input = inputString.toData()
@@ -13,7 +13,7 @@ class gzipTests: XCTestCase {
         let recoveredString = recoveredInput.toString()
         XCTAssertEqual(recoveredString, inputString)
     }
-    
+
     func testEmpty() throws {
         let inputString = ""
         let input = inputString.toData()
@@ -22,12 +22,12 @@ class gzipTests: XCTestCase {
         let recoveredString = recoveredInput.toString()
         XCTAssertEqual(recoveredString, inputString)
     }
-    
+
     func testDecompress_IncorrectData() throws {
         let inputString = "foo"
         let input = inputString.toData()
         do {
-            try input.gzipUncompressed()
+            _ = try input.gzipUncompressed()
         } catch GzipError.Data(message: let message) {
             //all good
             XCTAssertEqual(message, "incorrect header check")
@@ -44,21 +44,21 @@ class gzipTests: XCTestCase {
         let recoveredString = String(recoveredInput)
         XCTAssertEqual(recoveredString, inputString)
     }
-    
+
     func testUncompressGzip_Fixture() throws {
         let data = NSData(base64Encoded: "H4sICElFQ1cAA2ZpbGUudHh0AMtIzcnJVyjPL8pJUUjLz1dISiwC00DMBQBN/m/HHAAAAA==", options: [])!
         let output = try data.gzipUncompressed()
         let outputString = output.toString()
         XCTAssertEqual(outputString, "hello world foo bar foo foo\n")
     }
-    
+
     func testCompressGzip_Fixture() throws {
         let data = "hello world foo bar foo foo\n".data(using: NSUTF8StringEncoding)!
         let output = try data.gzipCompressed()
         let outputString = output.base64EncodedString([])
         XCTAssertEqual(outputString, "H4sIAAAAAAAAA8tIzcnJVyjPL8pJUUjLz1dISiwC00DMBQBN/m/HHAAAAA==")
     }
-    
+
     func testStream_Uncompress_C7Data() throws {
         let inputData = "H4sICElFQ1cAA2ZpbGUudHh0AMtIzcnJVyjPL8pJUUjLz1dISiwC00DMBQBN/m/HHAAAAA==".fromBase64toC7Data()
         let sourceStream = Drain(for: inputData)
@@ -67,7 +67,7 @@ class gzipTests: XCTestCase {
         let outputString = String(outData)
         XCTAssertEqual(outputString, "hello world foo bar foo foo\n")
     }
-    
+
     func testStream_Compress_C7Data() throws {
         let inputData = "hello world foo bar foo foo\n".data
         let sourceStream = Drain(for: inputData)
@@ -76,7 +76,7 @@ class gzipTests: XCTestCase {
         let outputString = outData.toNSData().base64EncodedString([])
         XCTAssertEqual(outputString, "H4sIAAAAAAAAA8tIzcnJVyjPL8pJUUjLz1dISiwC00DMBQBN/m/HHAAAAA==")
     }
-    
+
     func testLarge_Stream_Identity() throws {
         let inputString = Array(repeating: "hello world ", count: 3000).joined(separator: ", ")
         let inputData = inputString.data
@@ -87,7 +87,7 @@ class gzipTests: XCTestCase {
         let outputString = String(outputData)
         XCTAssertEqual(inputString, outputString)
     }
-    
+
     #if os(Linux)
     //TODO: once a snapshot after 05-09 gets released, remove this as
     //performance tests are already implemented in corelibs-xctest (just not
@@ -97,24 +97,24 @@ class gzipTests: XCTestCase {
     func testPerformance_NSData() throws {
         let inputString = Array(repeating: "hello world ", count: 100000).joined(separator: ", ")
         let input: NSData = inputString.toData()
-        
+
         measure {
             let output = try! input.gzipCompressed()
             _ = try! output.gzipUncompressed()
         }
     }
-    
+
     func testPerformance_C7Data() throws {
         let inputString = Array(repeating: "hello world ", count: 100000).joined(separator: ", ")
         let input: C7.Data = inputString.data
-        
+
         measure {
             let output = try! input.gzipCompressed()
             _ = try! output.gzipUncompressed()
         }
     }
     #endif
-    
+
 //    func testNoLeaks_NSData() throws {
 //        for _ in 0..<100 {
 //            try autoreleasepoolIfAvailable {
@@ -128,7 +128,7 @@ class gzipTests: XCTestCase {
 //            }
 //        }
 //    }
-//    
+//
 //    func testNoLeaks_Data() throws {
 //        for _ in 0..<100 {
 //            try autoreleasepoolIfAvailable {
@@ -142,7 +142,7 @@ class gzipTests: XCTestCase {
 //            }
 //        }
 //    }
-    
+
 //    func testNoCopying_toNSData() throws {
 //        let inputString = Array(repeating: "hello world ", count: 1000000).joined(separator: ", ")
 //        for _ in 0..<100 {
@@ -156,7 +156,7 @@ class gzipTests: XCTestCase {
 //            print("bump")
 //        }
 //    }
-    
+
 //    func testNoCopying_toC7Data() throws {
 //        let inputString = Array(repeating: "hello world ", count: 1000000).joined(separator: ", ")
 //        for _ in 0..<100 {
@@ -178,7 +178,7 @@ extension String {
     func toData() -> NSData {
         return self.data(using: NSUTF8StringEncoding) ?? NSData()
     }
-    
+
     func fromBase64toC7Data() -> Data {
         return NSData(base64Encoded: self, options: [])!.toC7Data()
     }
