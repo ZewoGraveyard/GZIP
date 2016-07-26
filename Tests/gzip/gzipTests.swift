@@ -28,7 +28,7 @@ class gzipTests: XCTestCase {
         let input = inputString.toData()
         do {
             _ = try input.gzipUncompressed()
-        } catch GzipError.Data(message: let message) {
+        } catch GzipError.data(message: let message) {
             //all good
             XCTAssertEqual(message, "incorrect header check")
             return
@@ -46,16 +46,16 @@ class gzipTests: XCTestCase {
     }
 
     func testUncompressGzip_Fixture() throws {
-        let data = NSData(base64Encoded: "H4sICElFQ1cAA2ZpbGUudHh0AMtIzcnJVyjPL8pJUUjLz1dISiwC00DMBQBN/m/HHAAAAA==", options: [])!
+        let data = Data(base64Encoded: "H4sICElFQ1cAA2ZpbGUudHh0AMtIzcnJVyjPL8pJUUjLz1dISiwC00DMBQBN/m/HHAAAAA==", options: [])!
         let output = try data.gzipUncompressed()
         let outputString = output.toString()
         XCTAssertEqual(outputString, "hello world foo bar foo foo\n")
     }
 
     func testCompressGzip_Fixture() throws {
-        let data = "hello world foo bar foo foo\n".data(using: NSUTF8StringEncoding)!
+        let data = "hello world foo bar foo foo\n".data(using: String.Encoding.utf8)!
         let output = try data.gzipCompressed()
-        let outputString = output.base64EncodedString([])
+        let outputString = output.base64EncodedString(options: [])
         XCTAssertEqual(outputString, "H4sIAAAAAAAAA8tIzcnJVyjPL8pJUUjLz1dISiwC00DMBQBN/m/HHAAAAA==")
     }
 
@@ -73,7 +73,7 @@ class gzipTests: XCTestCase {
         let sourceStream = Drain(for: inputData)
         let outStream = try GzipStream(rawStream: sourceStream, mode: .compress)
         let outData = Drain(for: outStream).data
-        let outputString = outData.toNSData().base64EncodedString([])
+        let outputString = outData.toNSData().base64EncodedString(options: [])
         XCTAssertEqual(outputString, "H4sIAAAAAAAAA8tIzcnJVyjPL8pJUUjLz1dISiwC00DMBQBN/m/HHAAAAA==")
     }
 
@@ -88,16 +88,20 @@ class gzipTests: XCTestCase {
         XCTAssertEqual(inputString, outputString)
     }
 
-    #if os(Linux)
-    //TODO: once a snapshot after 05-09 gets released, remove this as
-    //performance tests are already implemented in corelibs-xctest (just not
-    //yet released)
-    #else
-    //TODO: reinstate these performance tests
     func testPerformance_NSData() throws {
         let inputString = Array(repeating: "hello world ", count: 100000).joined(separator: ", ")
         let input: NSData = inputString.toData()
 
+        measure {
+            let output = try! input.gzipCompressed()
+            _ = try! output.gzipUncompressed()
+        }
+    }
+    
+    func testPerformance_FoundationData() throws {
+        let inputString = Array(repeating: "hello world ", count: 100000).joined(separator: ", ")
+        let input: Foundation.Data = inputString.toData()
+        
         measure {
             let output = try! input.gzipCompressed()
             _ = try! output.gzipUncompressed()
@@ -113,7 +117,6 @@ class gzipTests: XCTestCase {
             _ = try! output.gzipUncompressed()
         }
     }
-    #endif
 
 //    func testNoLeaks_NSData() throws {
 //        for _ in 0..<100 {
@@ -175,44 +178,34 @@ class gzipTests: XCTestCase {
 }
 
 extension String {
-    func toData() -> NSData {
-        return self.data(using: NSUTF8StringEncoding) ?? NSData()
+    func toData() -> Foundation.Data {
+        return self.data(using: String.Encoding.utf8) ?? Foundation.Data()
     }
 
-    func fromBase64toC7Data() -> Data {
+    func fromBase64toC7Data() -> C7.Data {
         return NSData(base64Encoded: self, options: [])!.toC7Data()
     }
 }
 
-extension NSData {
+extension Foundation.Data {
     func toString() -> String {
-        return String(data: self, encoding: NSUTF8StringEncoding) ?? ""
+        return String(data: self, encoding: String.Encoding.utf8) ?? ""
     }
 }
 
 extension gzipTests {
-	static var allTests : [(String, (gzipTests) -> () throws -> Void)] {
-		var all = [
-			("testCompressAndUncompress_NSData", testCompressAndUncompress_NSData),
-			("testEmpty", testEmpty),
-			("testDecompress_IncorrectData", testDecompress_IncorrectData),
-			("testCompressAndUncompress_C7Data", testCompressAndUncompress_C7Data),
-			("testUncompressGzip_Fixture", testUncompressGzip_Fixture),
-			("testCompressGzip_Fixture", testCompressGzip_Fixture),
-			("testStream_Uncompress_C7Data", testStream_Uncompress_C7Data),
-			("testStream_Compress_C7Data", testStream_Compress_C7Data),
-			("testLarge_Stream_Identity", testLarge_Stream_Identity)
-        ]
-        #if os(Linux)
-            //TODO: once a snapshot after 05-09 gets released, remove this as
-            //performance tests are already implemented in corelibs-xctest (just not
-            //yet released)
-        #else
-            all += [
-                ("testPerformance_NSData", testPerformance_NSData),
-                ("testPerformance_C7Data", testPerformance_C7Data)
-            ]
-        #endif
-        return all
-	}
+    static var allTests = [
+        ("testCompressAndUncompress_NSData", testCompressAndUncompress_NSData),
+        ("testEmpty", testEmpty),
+        ("testDecompress_IncorrectData", testDecompress_IncorrectData),
+        ("testCompressAndUncompress_C7Data", testCompressAndUncompress_C7Data),
+        ("testUncompressGzip_Fixture", testUncompressGzip_Fixture),
+        ("testCompressGzip_Fixture", testCompressGzip_Fixture),
+        ("testStream_Uncompress_C7Data", testStream_Uncompress_C7Data),
+        ("testStream_Compress_C7Data", testStream_Compress_C7Data),
+        ("testLarge_Stream_Identity", testLarge_Stream_Identity),
+        ("testPerformance_NSData", testPerformance_NSData),
+        ("testPerformance_FoundationData", testPerformance_FoundationData),
+        ("testPerformance_C7Data", testPerformance_C7Data)
+    ]
 }

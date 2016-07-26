@@ -1,6 +1,6 @@
 import S4
 
-public enum GzipMiddlewareError: ErrorProtocol {
+public enum GzipMiddlewareError: Error {
     case unsupportedStreamType
 }
 

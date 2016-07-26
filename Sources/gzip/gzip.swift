@@ -28,28 +28,28 @@ protocol GzipProcessor: class {
 }
 
 private let CHUNK_SIZE: Int = 2 ^ 14
-private let STREAM_SIZE: Int32 = Int32(sizeof(z_stream))
+private let STREAM_SIZE: Int32 = Int32(sizeof(z_stream.self))
 
-public enum GzipError: ErrorProtocol {
+public enum GzipError: Error {
     //Reference: http://www.zlib.net/manual.html
     
     /// The stream structure was inconsistent.
-    case Stream(message: String)
+    case stream(message: String)
     
     ///The input data was corrupted (input stream not conforming to the zlib format or incorrect check value).
-    case Data(message: String)
+    case data(message: String)
     
     /// There was not enough memory.
-    case Memory(message: String)
+    case memory(message: String)
     
     /// No progress is possible or there was not enough room in the output buffer.
-    case Buffer(message: String)
+    case buffer(message: String)
     
     /// The zlib library version is incompatible with the version assumed by the caller.
-    case Version(message: String)
+    case version(message: String)
     
     /// An unknown error occurred.
-    case Unknown(message: String, code: Int)
+    case unknown(message: String, code: Int)
     
     internal init(code: Int32, message cmessage: UnsafePointer<CChar>?)
     {
@@ -60,12 +60,12 @@ public enum GzipError: ErrorProtocol {
             message = "unknown gzip error"
         }
         switch code {
-        case Z_STREAM_ERROR: self = .Stream(message: message)
-        case Z_DATA_ERROR: self = .Data(message: message)
-        case Z_MEM_ERROR: self = .Memory(message: message)
-        case Z_BUF_ERROR: self = .Buffer(message: message)
-        case Z_VERSION_ERROR: self = .Version(message: message)
-        default: self = .Unknown(message: message, code: Int(code))
+        case Z_STREAM_ERROR: self = .stream(message: message)
+        case Z_DATA_ERROR: self = .data(message: message)
+        case Z_MEM_ERROR: self = .memory(message: message)
+        case Z_BUF_ERROR: self = .buffer(message: message)
+        case Z_VERSION_ERROR: self = .version(message: message)
+        default: self = .unknown(message: message, code: Int(code))
         }
     }
 }

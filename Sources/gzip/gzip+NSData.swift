@@ -22,3 +22,14 @@ extension NSData: Gzippable {
         }
     }
 }
+
+extension Data: Gzippable {
+    
+    public func gzipCompressed() throws -> Data {
+        return try Data(referencing: NSData(data: self).gzipCompressed())
+    }
+    
+    public func gzipUncompressed() throws -> Data {
+        return try Data(referencing: NSData(data: self).gzipUncompressed())
+    }
+}

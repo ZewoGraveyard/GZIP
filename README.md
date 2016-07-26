@@ -13,10 +13,10 @@
 Works on `NSData` and `C7.Data`, or anything [`Gzippable`](https://github.com/czechboy0/gzip/blob/master/Sources/gzip/gzip%2BNSData.swift#L42-46)
 
 ```swift
-let myData = ... //NSData or C7.Data
-let myGzipCompressedData = try myData.gzipCompressed() //NSData or C7.Data
+let myData = ... //NSData, Data or C7.Data
+let myGzipCompressedData = try myData.gzipCompressed() //NSData, Data or C7.Data
 ...
-let myGzipUncompressedData = try myGzipCompressedData.gzipUncompressed() //NSData or C7.Data
+let myGzipUncompressedData = try myGzipCompressedData.gzipUncompressed() //NSData, Data or C7.Data
 ... //PROFIT!
 ```
 
@@ -45,7 +45,7 @@ As this library uses a SwiftPM-compatible source of [zlib](https://github.com/Ze
 ## Swift Package Manager
 
 ```swift
-.Package(url: "https://github.com/Zewo/gzip.git", majorVersion: 0, minor: 3)
+.Package(url: "https://github.com/Zewo/gzip.git", majorVersion: 0, minor: 4)
 ```
 
 :gift_heart: Contributing
