@@ -55,7 +55,11 @@ class gzipTests: XCTestCase {
     func testCompressGzip_Fixture() throws {
         let data = "hello world foo bar foo foo\n".data(using: String.Encoding.utf8)!
         let output = try data.gzipCompressed()
+        #if os(Linux)
+        let outputString = output.base64EncodedString([])
+        #else
         let outputString = output.base64EncodedString(options: [])
+        #endif
         XCTAssertEqual(outputString, "H4sIAAAAAAAAA8tIzcnJVyjPL8pJUUjLz1dISiwC00DMBQBN/m/HHAAAAA==")
     }
 
@@ -73,7 +77,11 @@ class gzipTests: XCTestCase {
         let sourceStream = Drain(for: inputData)
         let outStream = try GzipStream(rawStream: sourceStream, mode: .compress)
         let outData = Drain(for: outStream).data
+        #if os(Linux)
+        let outputString = outData.toNSData().base64EncodedString([])
+        #else
         let outputString = outData.toNSData().base64EncodedString(options: [])
+        #endif
         XCTAssertEqual(outputString, "H4sIAAAAAAAAA8tIzcnJVyjPL8pJUUjLz1dISiwC00DMBQBN/m/HHAAAAA==")
     }
 
@@ -90,7 +98,7 @@ class gzipTests: XCTestCase {
 
     func testPerformance_NSData() throws {
         let inputString = Array(repeating: "hello world ", count: 100000).joined(separator: ", ")
-        let input: NSData = inputString.toData()
+        let input: NSData = inputString.toData().toNSData()
 
         measure {
             let output = try! input.gzipCompressed()
