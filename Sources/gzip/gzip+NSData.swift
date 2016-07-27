@@ -22,3 +22,34 @@ extension NSData: Gzippable {
         }
     }
 }
+
+extension NSData {
+    public func toFoundationData() -> Foundation.Data {
+        #if os(Linux)
+        return Data._unconditionallyBridgeFromObjectiveC(self)
+        #else
+        return Data(referencing: self)
+        #endif
+    }
+}
+
+extension Foundation.Data {
+    public func toNSData() -> NSData {
+        #if os(Linux)
+        return self._bridgeToObjectiveC()
+        #else
+        return NSData(data: self)
+        #endif
+    }
+}
+
+extension Data: Gzippable {
+    
+    public func gzipCompressed() throws -> Data {
+        return try self.toNSData().gzipCompressed().toFoundationData()
+    }
+    
+    public func gzipUncompressed() throws -> Data {
+        return try self.toNSData().gzipUncompressed().toFoundationData()
+    }
+}

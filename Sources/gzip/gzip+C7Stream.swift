@@ -14,8 +14,8 @@ public final class GzipStream: ReceivingStream {
         try self.processor.initialize()
     }
     
-    public func receive(upTo byteCount: Int, timingOut deadline: Double) throws -> Data {
-        let chunk: Data
+    public func receive(upTo byteCount: Int, timingOut deadline: Double) throws -> C7.Data {
+        let chunk: C7.Data
         do {
             chunk = try rawStream.receive(upTo: byteCount, timingOut: deadline)
         } catch StreamError.closedStream(let data) {
@@ -23,7 +23,7 @@ public final class GzipStream: ReceivingStream {
         }
 
         if processor.closed {
-            throw GzipError.Unknown(message: "Gzip stream already closed", code: 10)
+            throw GzipError.unknown(message: "Gzip stream already closed", code: 10)
         }
 
         let isLast = rawStream.closed || processor.closed

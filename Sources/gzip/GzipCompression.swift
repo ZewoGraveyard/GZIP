@@ -2,7 +2,7 @@ import Foundation
 import Czlib
 
 private let CHUNK_SIZE: Int = 16384
-private let STREAM_SIZE: Int32 = Int32(sizeof(z_stream))
+private let STREAM_SIZE: Int32 = Int32(sizeof(z_stream.self))
 
 final class GzipUncompressor: GzipProcessor {
     
@@ -97,8 +97,8 @@ final class GzipCompressor: GzipProcessor {
 func _makeStream() -> UnsafeMutablePointer<z_stream> {
     
     let stream = z_stream(next_in: nil, avail_in: 0, total_in: 0, next_out: nil, avail_out: 0, total_out: 0, msg: nil, state: nil, zalloc: nil, zfree: nil, opaque: nil, data_type: 0, adler: 0, reserved: 0)
-    let ptr = UnsafeMutablePointer<z_stream>(allocatingCapacity: 1)
-    ptr.initialize(with: stream)
+    let ptr = UnsafeMutablePointer<z_stream>.allocate(capacity: 1)
+    ptr.initialize(to: stream)
     return ptr
 }
 
@@ -106,7 +106,7 @@ extension GzipProcessor {
     
     func _clearMemory() {
         _stream.deinitialize(count: 1)
-        _stream.deallocateCapacity(1)
+        _stream.deallocate(capacity: 1)
     }
     
     func _process(data: NSData,
@@ -121,7 +121,7 @@ extension GzipProcessor {
         _stream.pointee.avail_in = uInt(data.length)
         
         guard let output = NSMutableData(capacity: CHUNK_SIZE) else {
-            throw GzipError.Memory(message: "Not enough memory")
+            throw GzipError.memory(message: "Not enough memory")
         }
         output.length = CHUNK_SIZE
         
@@ -147,7 +147,7 @@ extension GzipProcessor {
         } while loop(result: result)
         
         guard result == Z_STREAM_END || result == Z_OK else {
-            throw GzipError.Stream(message: "Wrong result code \(result)")
+            throw GzipError.stream(message: "Wrong result code \(result)")
         }
         if shouldEnd(result: result) {
             end()

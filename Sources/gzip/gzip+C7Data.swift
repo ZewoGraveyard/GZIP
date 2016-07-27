@@ -1,16 +1,15 @@
 import C7
 import Foundation
 
-extension Data: Gzippable {
-    
-    public func gzipCompressed() throws -> Data {
+extension C7.Data: Gzippable {
+    public func gzipCompressed() throws -> C7.Data {
         return try self
             .toNSData()
             .gzipCompressed()
             .toC7Data()
     }
     
-    public func gzipUncompressed() throws -> Data {
+    public func gzipUncompressed() throws -> C7.Data {
         return try self
             .toNSData()
             .gzipUncompressed()
@@ -37,7 +36,6 @@ extension NSData {
 
 extension C7.Data {
     func toNSData() -> NSData {
-        
         // This version does *not* make a copy, so it basically toll-free & is still safe
         let bytes = self.bytes
         let mutable = UnsafeMutablePointer<UInt8>(bytes)

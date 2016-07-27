@@ -10,7 +10,7 @@ import Foundation
 
 public func autoreleasepoolIfAvailable<Result>(_ body: @noescape () throws -> Result) rethrows -> Result {
     #if _runtime(_ObjC)
-        return try autoreleasepool(body)
+        return try autoreleasepool(invoking: body)
     #else
         return try body()
     #endif
