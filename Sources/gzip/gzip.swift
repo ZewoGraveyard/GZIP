@@ -5,7 +5,7 @@ public enum GzipMode {
     case compress
     case uncompress
     
-    internal func processor() -> GzipProcessor {
+    public func processor() -> GzipProcessor {
         switch self {
         case .compress: return GzipCompressor()
         case .uncompress: return GzipUncompressor()
@@ -19,7 +19,7 @@ public protocol Gzippable {
     func gzipUncompressed() throws -> DataType
 }
 
-protocol GzipProcessor: class {
+public protocol GzipProcessor: class {
     func initialize() throws
     func process(data: NSData, isLast: Bool) throws -> NSData
     func close()
