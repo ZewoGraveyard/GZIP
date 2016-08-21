@@ -10,30 +10,14 @@
 > gzip data compression from Swift, OS X & Linux ready
 
 # Usage
-Works on `NSData` and `C7.Data`, or anything [`Gzippable`](https://github.com/czechboy0/gzip/blob/master/Sources/gzip/gzip%2BNSData.swift#L42-46)
+Works on `NSData` or anything [`Gzippable`](https://github.com/czechboy0/gzip/blob/master/Sources/gzip/gzip%2BNSData.swift#L42-46)
 
 ```swift
-let myData = ... //NSData, Data or C7.Data
-let myGzipCompressedData = try myData.gzipCompressed() //NSData, Data or C7.Data
+let myData = ... //NSData
+let myGzipCompressedData = try myData.gzipCompressed() //NSData
 ...
-let myGzipUncompressedData = try myGzipCompressedData.gzipUncompressed() //NSData, Data or C7.Data
+let myGzipUncompressedData = try myGzipCompressedData.gzipUncompressed() //NSData
 ... //PROFIT!
-```
-
-Also contains a `GzipStream` class which conforms to `C7.ReceivingStream`, so it can be easily attached in a pipeline, like
-
-```swift
-let gzippedStream = ... //e.g. from S4.Body
-let uncompressedStream = try GzipStream(rawStream: gzippedStream, mode: .uncompress)
-... //PROFIT!
-```
-
-Also contains a `S4` compatible `Middleware`, which automatically adds the right headers to the request and decompresses the response if it's compressed.
-
-```swift
-let client = HTTPSClient.Client("https://my.server")
-let response = client.get("/compressed", middleware: GzipMiddleware())
-response.body.becomeBuffer() //<- Already decompressed data
 ```
 
 # Details
