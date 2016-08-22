@@ -108,6 +108,16 @@ func _makeStream() -> UnsafeMutablePointer<z_stream> {
 
 extension GzipProcessor {
     
+    /// Call before closing the stream, to ensure all data has been sent out.
+    public func safeFlush() throws -> NSData? {
+        guard !closed else { return nil }
+        return try flush()
+    }
+    
+    /// Call when all data has been submitted, but none of the calls
+    /// contains "last: true", meaning there might still be buffered data.
+    /// Not safe to call if stream is already closed. 
+    /// Use safeFlush() if you're unsure if the stream is closed
     public func flush() throws -> NSData {
         return try self.process(data: NSData(), isLast: true)
     }

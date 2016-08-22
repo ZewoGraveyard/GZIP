@@ -120,10 +120,15 @@ class gzipTests: XCTestCase {
         }
         
         //flush
-        let finalChunk = try processor.flush()
-        outData.append(finalChunk.toFoundationData())
+        let finalChunk = try processor.flush().toFoundationData()
+        outData.append(finalChunk)
         
         let str = outData.base64EncodedString()
+        
+        //ensure safe flush is safe to call
+        XCTAssertNil(try processor.safeFlush())
+        XCTAssertNil(try processor.safeFlush())
+        XCTAssertNil(try processor.safeFlush())
         
         //this is longer as the chunks are smaller
         //generally, large chunks allow better compression
