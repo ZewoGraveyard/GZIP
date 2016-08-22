@@ -75,7 +75,11 @@ final class GzipCompressor: GzipProcessor {
     func process(data: NSData, isLast: Bool) throws -> NSData {
         let mode = isLast ? Z_FINISH : Z_SYNC_FLUSH
         let processChunk: @noescape () -> Int32 = { return deflate(&_stream.pointee, mode) }
-        let loop: @noescape (result: Int32) -> Bool = { _ in _stream.pointee.avail_out == 0 }
+        let loop: @noescape (result: Int32) -> Bool = { result in
+            let fullOutput = self._stream.pointee.avail_out == 0
+            let finishAndOk = mode == Z_FINISH && result == Z_OK
+            return fullOutput || finishAndOk
+        }
         let shouldEnd: @noescape (result: Int32) -> Bool = { _ in isLast }
         let end: @noescape () -> () = { deflateEnd(&_stream.pointee) }
         return try self._process(data: data, processChunk: processChunk, loop: loop, shouldEnd: shouldEnd, end: end)
@@ -104,6 +108,20 @@ func _makeStream() -> UnsafeMutablePointer<z_stream> {
 
 extension GzipProcessor {
     
+    /// Call before closing the stream, to ensure all data has been sent out.
+    public func safeFlush() throws -> NSData? {
+        guard !closed else { return nil }
+        return try flush()
+    }
+    
+    /// Call when all data has been submitted, but none of the calls
+    /// contains "last: true", meaning there might still be buffered data.
+    /// Not safe to call if stream is already closed. 
+    /// Use safeFlush() if you're unsure if the stream is closed
+    public func flush() throws -> NSData {
+        return try self.process(data: NSData(), isLast: true)
+    }
+    
     func _clearMemory() {
         _stream.deinitialize(count: 1)
         _stream.deallocate(capacity: 1)
@@ -114,7 +132,6 @@ extension GzipProcessor {
                   loop: @noescape (result: Int32) -> Bool,
                   shouldEnd: @noescape (result: Int32) -> Bool,
                   end: @noescape () -> ()) throws -> NSData {
-        guard data.length > 0 else { return NSData() }
         
         let rawInput = UnsafeMutablePointer<Bytef>(data.bytes)
         _stream.pointee.next_in = rawInput
