@@ -17,6 +17,7 @@ class gzipTests: XCTestCase {
         let inputString = ""
         let input = inputString.toData()
         let output = try input.gzipCompressed()
+        XCTAssertEqual(output.count, 0)
         let recoveredInput = try output.gzipUncompressed()
         let recoveredString = recoveredInput.toString()
         XCTAssertEqual(recoveredString, inputString)
@@ -72,6 +73,81 @@ class gzipTests: XCTestCase {
             _ = try! output.gzipUncompressed()
         }
     }
+    
+    let unzippedString = "hello world foo bar foo foo"
+    var unzippedData: Data {
+        return unzippedString.data(using: String.Encoding.utf8)!
+    }
+    let zippedString = "H4sIAAAAAAAA/8tIzcnJVyjPL8pJUUjLz1dISiwC00AMAFeJPLcbAAAA"
+    var zippedData: Data {
+        return Data(base64Encoded: zippedString)!
+    }
+    
+    func testChunks_compress() throws {
+        let data = unzippedData //27 bytes
+        let processor = GzipMode.compress.processor()
+        try processor.initialize()
+        var outData: Data = Data()
+        let chunkSize = 5
+        let rounds = Int(floor(Double(data.count) / Double(chunkSize)))
+        for i in 0...rounds {
+            let end = min((i+1)*chunkSize, data.count)
+            let chunk = Data(data[i*chunkSize..<end])
+            let processedChunk = try processor.process(data: chunk, isLast: i == rounds)
+            outData.append(processedChunk.toFoundationData())
+        }
+        let str = outData.base64EncodedString()
+        
+        //this is longer as the chunks are smaller
+        //generally, large chunks allow better compression
+        XCTAssertEqual(str, "H4sIAAAAAAAAA8pIzcnJBwAAAP//UijPL8oBAAAA//9KUUjLzwcAAAD//1JISixSAAAAAP//AtFpAAAAAP//y88HAFeJPLcbAAAA")
+    }
+    
+    //ensure we can keep compressing and once we know all data has been fed,
+    //we just send empty data to get the buffered encoded data out
+    func testChunks_compress_flushWithEmpty() throws {
+        let data = unzippedData //27 bytes
+        let processor = GzipMode.compress.processor()
+        try processor.initialize()
+        var outData: Data = Data()
+        let chunkSize = 5
+        let rounds = Int(floor(Double(data.count) / Double(chunkSize)))
+        for i in 0...rounds {
+            let end = min((i+1)*chunkSize, data.count)
+            let chunk = Data(data[i*chunkSize..<end])
+            let processedChunk = try processor.process(data: chunk, isLast: false)
+            outData.append(processedChunk.toFoundationData())
+        }
+        
+        //flush
+        let finalChunk = try processor.flush()
+        outData.append(finalChunk.toFoundationData())
+        
+        let str = outData.base64EncodedString()
+        
+        //this is longer as the chunks are smaller
+        //generally, large chunks allow better compression
+        XCTAssertEqual(str, "H4sIAAAAAAAAA8pIzcnJBwAAAP//UijPL8oBAAAA//9KUUjLzwcAAAD//1JISixSAAAAAP//AtFpAAAAAP//ys8HAAAA//8DAFeJPLcbAAAA")
+    }
+    
+    func testChunks_uncompress() throws {
+        let data = zippedData
+        let processor = GzipMode.uncompress.processor()
+        try processor.initialize()
+        var outData: Data = Data()
+        let chunkSize = 5
+        let rounds = Int(floor(Double(data.count) / Double(chunkSize)))
+        for i in 0...rounds {
+            let end = min((i+1)*chunkSize, data.count)
+            let chunk = Data(data[i*chunkSize..<end])
+            let processedChunk = try processor.process(data: chunk, isLast: i == rounds)
+            outData.append(processedChunk.toFoundationData())
+        }
+        let str = outData.toString()
+        
+        XCTAssertEqual(str, unzippedString)
+    }
+    
 
 //    func testNoLeaks_NSData() throws {
 //        for _ in 0..<100 {
@@ -152,6 +228,9 @@ extension gzipTests {
         ("testUncompressGzip_Fixture", testUncompressGzip_Fixture),
         ("testCompressGzip_Fixture", testCompressGzip_Fixture),
         ("testPerformance_NSData", testPerformance_NSData),
-        ("testPerformance_FoundationData", testPerformance_FoundationData)
+        ("testPerformance_FoundationData", testPerformance_FoundationData),
+        ("testChunks_compress", testChunks_compress),
+        ("testChunks_compress_flushWithEmpty", testChunks_compress_flushWithEmpty),
+        ("testChunks_uncompress", testChunks_uncompress)
     ]
 }
