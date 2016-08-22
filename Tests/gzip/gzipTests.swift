@@ -92,7 +92,7 @@ class gzipTests: XCTestCase {
         let rounds = Int(floor(Double(data.count) / Double(chunkSize)))
         for i in 0...rounds {
             let end = min((i+1)*chunkSize, data.count)
-            let chunk = Data(data[i*chunkSize..<end])
+            let chunk = data.subdata(i*chunkSize..<end)
             let processedChunk = try processor.process(data: chunk, isLast: i == rounds)
             outData.append(processedChunk.toFoundationData())
         }
@@ -114,7 +114,7 @@ class gzipTests: XCTestCase {
         let rounds = Int(floor(Double(data.count) / Double(chunkSize)))
         for i in 0...rounds {
             let end = min((i+1)*chunkSize, data.count)
-            let chunk = Data(data[i*chunkSize..<end])
+            let chunk = data.subdata(i*chunkSize..<end)
             let processedChunk = try processor.process(data: chunk, isLast: false)
             outData.append(processedChunk.toFoundationData())
         }
@@ -139,7 +139,7 @@ class gzipTests: XCTestCase {
         let rounds = Int(floor(Double(data.count) / Double(chunkSize)))
         for i in 0...rounds {
             let end = min((i+1)*chunkSize, data.count)
-            let chunk = Data(data[i*chunkSize..<end])
+            let chunk = data.subdata(i*chunkSize..<end)
             let processedChunk = try processor.process(data: chunk, isLast: i == rounds)
             outData.append(processedChunk.toFoundationData())
         }
@@ -162,50 +162,13 @@ class gzipTests: XCTestCase {
 //            }
 //        }
 //    }
-//
-//    func testNoLeaks_Data() throws {
-//        for _ in 0..<100 {
-//            try autoreleasepoolIfAvailable {
-//                let inputString = Array(repeating: "hello world ", count: 10000).joined(separator: ", ")
-//                let input = inputString.data
-//                let output = try input.gzipCompressed()
-//                let recoveredInput = try output.gzipUncompressed()
-//                let recoveredString = String(recoveredInput)
-//                XCTAssertEqual(recoveredString, inputString)
-//                sleep(1)
-//            }
-//        }
-//    }
+}
 
-//    func testNoCopying_toNSData() throws {
-//        let inputString = Array(repeating: "hello world ", count: 1000000).joined(separator: ", ")
-//        for _ in 0..<100 {
-//            func yo() -> NSData {
-//                let input = inputString.data
-//                sleep(1)
-//                return input.toNSData()
-//            }
-//            let dat = yo()
-//            sleep(1)
-//            print("bump")
-//        }
-//    }
-
-//    func testNoCopying_toC7Data() throws {
-//        let inputString = Array(repeating: "hello world ", count: 1000000).joined(separator: ", ")
-//        for _ in 0..<100 {
-//            func yo() -> C7.Data {
-//                return autoreleasepoolIfAvailable {
-//                    let input = inputString.data(using: NSUTF8StringEncoding)!
-//                    sleep(1)
-//                    return input.toC7DataCopyBytes()
-//                }
-//            }
-//            let dat = yo()
-//            sleep(1)
-//            print("bump")
-//        }
-//    }
+extension Data {
+    func subdata(_ range: Range<Int>) -> NSData {
+        let sub: [UInt8] = Array(self[range])
+        return Data(bytes: sub).toNSData()
+    }
 }
 
 extension String {
