@@ -28,7 +28,7 @@ public protocol GzipProcessor: class {
 }
 
 private let CHUNK_SIZE: Int = 2 ^ 14
-private let STREAM_SIZE: Int32 = Int32(sizeof(z_stream.self))
+private let STREAM_SIZE: Int32 = Int32(MemoryLayout<z_stream>.size)
 
 public enum GzipError: Error {
     //Reference: http://www.zlib.net/manual.html

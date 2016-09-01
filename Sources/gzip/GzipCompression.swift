@@ -2,7 +2,7 @@ import Foundation
 import Czlib
 
 private let CHUNK_SIZE: Int = 16384
-private let STREAM_SIZE: Int32 = Int32(sizeof(z_stream.self))
+private let STREAM_SIZE: Int32 = Int32(MemoryLayout<z_stream>.size)
 
 final class GzipUncompressor: GzipProcessor {
     
@@ -27,10 +27,10 @@ final class GzipUncompressor: GzipProcessor {
     
     func process(data: NSData, isLast: Bool) throws -> NSData {
         let mode = isLast ? Z_FINISH : Z_SYNC_FLUSH
-        let processChunk: @noescape () -> Int32 = { return inflate(&_stream.pointee, mode) }
-        let loop: @noescape (result: Int32) -> Bool = { _ in _stream.pointee.avail_in > 0 }
-        let shouldEnd: @noescape (result: Int32) -> Bool = { _ in isLast }
-        let end: @noescape () -> () = { inflateEnd(&_stream.pointee) }
+        let processChunk: () -> Int32 = { return inflate(&self._stream.pointee, mode) }
+        let loop: (_ result: Int32) -> Bool = { _ in self._stream.pointee.avail_in > 0 }
+        let shouldEnd: (_ result: Int32) -> Bool = { _ in isLast }
+        let end: () -> () = { inflateEnd(&self._stream.pointee) }
         return try self._process(data: data, processChunk: processChunk, loop: loop, shouldEnd: shouldEnd, end: end)
     }
     
@@ -74,14 +74,14 @@ final class GzipCompressor: GzipProcessor {
     
     func process(data: NSData, isLast: Bool) throws -> NSData {
         let mode = isLast ? Z_FINISH : Z_SYNC_FLUSH
-        let processChunk: @noescape () -> Int32 = { return deflate(&_stream.pointee, mode) }
-        let loop: @noescape (result: Int32) -> Bool = { result in
+        let processChunk: () -> Int32 = { return deflate(&self._stream.pointee, mode) }
+        let loop: (_ result: Int32) -> Bool = { result in
             let fullOutput = self._stream.pointee.avail_out == 0
             let finishAndOk = mode == Z_FINISH && result == Z_OK
             return fullOutput || finishAndOk
         }
-        let shouldEnd: @noescape (result: Int32) -> Bool = { _ in isLast }
-        let end: @noescape () -> () = { deflateEnd(&_stream.pointee) }
+        let shouldEnd: (_ result: Int32) -> Bool = { _ in isLast }
+        let end: () -> () = { deflateEnd(&self._stream.pointee) }
         return try self._process(data: data, processChunk: processChunk, loop: loop, shouldEnd: shouldEnd, end: end)
     }
 
@@ -128,12 +128,13 @@ extension GzipProcessor {
     }
     
     func _process(data: NSData,
-                  processChunk: @noescape () -> Int32,
-                  loop: @noescape (result: Int32) -> Bool,
-                  shouldEnd: @noescape (result: Int32) -> Bool,
-                  end: @noescape () -> ()) throws -> NSData {
+                  processChunk: () -> Int32,
+                  loop: (_ result: Int32) -> Bool,
+                  shouldEnd: (_ result: Int32) -> Bool,
+                  end: () -> ()) throws -> NSData {
         
-        let rawInput = UnsafeMutablePointer<Bytef>(data.bytes)
+        let mutableInputBytes = UnsafeMutableRawPointer(mutating: data.bytes)
+        let rawInput = mutableInputBytes.bindMemory(to: Bytef.self, capacity: data.length)
         _stream.pointee.next_in = rawInput
         _stream.pointee.avail_in = uInt(data.length)
         
@@ -154,19 +155,21 @@ extension GzipProcessor {
             let writtenThisChunk = _stream.pointee.total_out - chunkStart
             let availOut = uLong(output.length) - writtenThisChunk
             _stream.pointee.avail_out = uInt(availOut)
-            _stream.pointee.next_out = UnsafeMutablePointer<Bytef>(output.mutableBytes).advanced(by: Int(writtenThisChunk))
+            
+            let writingBuffer = output.mutableBytes.assumingMemoryBound(to: Bytef.self)
+            _stream.pointee.next_out = writingBuffer.advanced(by: Int(writtenThisChunk))
             
             result = processChunk()
             guard result >= 0 || (result == Z_BUF_ERROR && _stream.pointee.avail_out == 0) else {
                 throw GzipError(code: result, message: _stream.pointee.msg)
             }
             
-        } while loop(result: result)
+        } while loop(result)
         
         guard result == Z_STREAM_END || result == Z_OK else {
             throw GzipError.stream(message: "Wrong result code \(result)")
         }
-        if shouldEnd(result: result) {
+        if shouldEnd(result) {
             end()
             closed = true
         }
