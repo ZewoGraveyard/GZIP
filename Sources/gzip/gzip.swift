@@ -21,7 +21,7 @@ public protocol Gzippable {
 
 public protocol GzipProcessor: class {
     func initialize() throws
-    func process(data: NSData, isLast: Bool) throws -> NSData
+    func process(data: Data, isLast: Bool) throws -> Data
     func close()
     var closed: Bool { get set }
     var _stream: UnsafeMutablePointer<z_stream> { get }
