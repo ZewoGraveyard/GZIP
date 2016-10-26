@@ -10,14 +10,27 @@
 > gzip data compression from Swift, OS X & Linux ready
 
 # Usage
-Works on `NSData` or anything [`Gzippable`](https://github.com/czechboy0/gzip/blob/master/Sources/gzip/gzip%2BNSData.swift#L42-46)
+Works on `Data` or anything [`Gzippable`](https://github.com/czechboy0/gzip/blob/master/Sources/gzip/gzip%2BData.swift#L42-46)
 
 ```swift
-let myData = ... //NSData
-let myGzipCompressedData = try myData.gzipCompressed() //NSData
+let myData = ... //Data
+let myGzipCompressedData = try myData.gzipCompressed() //Data
 ...
-let myGzipUncompressedData = try myGzipCompressedData.gzipUncompressed() //NSData
+let myGzipUncompressedData = try myGzipCompressedData.gzipUncompressed() //Data
 ... //PROFIT!
+```
+
+Middleware to suport gzipped content in `HTTPClient`.
+
+```swift
+let request = ... //Request
+let response = try client.request(request, middleware: [GzipMiddleware()])
+ ```
+ 
+ Please note, that `GzipMiddleware` should be placed at the end of a chain:
+ 
+```swift
+let response = try client.request(request, middleware: [ContentNegotiationMiddleware(mediaTypes: [.json], mode: .client), GzipMiddleware()])
 ```
 
 # Details
