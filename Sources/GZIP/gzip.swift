@@ -15,7 +15,18 @@ public enum GzipMode {
 
 public protocol Gzippable {
     associatedtype DataType
+    /// returns compressed buffer or throws an `Error`.
+    ///
+    /// - throws: An `Error` if the buffer can not be compressed.
+    ///
+    /// - returns: A Buffer with compressed data or throws an `Error`.
     func gzipCompressed() throws -> DataType
+    
+    /// returns uncompressed buffer or throws an `Error`.
+    ///
+    /// - throws: An `Error` if the buffer can not be decompressed.
+    ///
+    /// - returns: A Buffer with uncompressed data or throws an `Error`.
     func gzipUncompressed() throws -> DataType
 }
 

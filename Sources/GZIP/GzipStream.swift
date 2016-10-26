@@ -20,9 +20,7 @@ public final class GzipStream: Axis.InputStream {
         self.closed = true
     }
     
-    public func open(deadline: Double) throws {
-        
-    }
+    public func open(deadline: Double) throws {}
     
     public func read(into readBuffer: UnsafeMutableBufferPointer<Byte>, deadline: Double) throws -> UnsafeBufferPointer<Byte> {
         

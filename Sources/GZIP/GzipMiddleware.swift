@@ -5,6 +5,12 @@ public enum GzipMiddlewareError: Error {
     case unsupportedStreamType
 }
 
+/// Middleware for decompressing gzipped data
+/// Adds HTTP header `Accept-Encoding: gzip` and work only if response
+/// header `Content-Encoding` contains `gzip`
+/// Note: this middleware should we at the end of a middleware chain.
+/// let request = Request(method: .get, url: "/gzipped")!
+/// let response = try client.request(request, middleware: [ContentNegotiationMiddleware(mediaTypes: [.json], mode: .client), GzipMiddleware()])
 public struct GzipMiddleware: Middleware {
     
     public init() { }

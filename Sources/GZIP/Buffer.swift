@@ -11,8 +11,7 @@ extension Buffer {
     }
 }
 
-extension Buffer {
-    
+extension Buffer: Gzippable {
     public func gzipCompressed() throws -> Buffer {
         return try autoreleasepoolIfAvailable {
             guard self.count > 0 else { return Buffer() }
@@ -23,7 +22,7 @@ extension Buffer {
             return Buffer(outData)
         }
     }
-    
+
     public func gzipUncompressed() throws -> Buffer {
         return try autoreleasepoolIfAvailable {
             guard self.count > 0 else { return Buffer() }
