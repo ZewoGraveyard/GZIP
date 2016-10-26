@@ -1,10 +1,10 @@
 import XCTest
 import Foundation
-@testable import gzip
+@testable import GZIP
 
-class gzipTests: XCTestCase {
+class GZIPTests: XCTestCase {
 
-    func testCompressAndUncompress_NSData() throws {
+    func testCompressAndUncompress_Data() throws {
         let inputString = "hello world hello world hello world hello world hello errbody"
         let input = inputString.toData()
         let output = try input.gzipCompressed()
@@ -54,7 +54,7 @@ class gzipTests: XCTestCase {
         XCTAssertEqual(outputString, "H4sIAAAAAAAAA8tIzcnJVyjPL8pJUUjLz1dISiwC00DMBQBN/m/HHAAAAA==")
     }
 
-    func testPerformance_NSData() throws {
+    func testPerformance_Data() throws {
         let inputString = Array(repeating: "hello world ", count: 100000).joined(separator: ", ")
         let input = inputString.toData()
 
@@ -154,7 +154,7 @@ class gzipTests: XCTestCase {
     }
     
 
-//    func testNoLeaks_NSData() throws {
+//    func testNoLeaks_Data() throws {
 //        for _ in 0..<100 {
 //            try autoreleasepoolIfAvailable {
 //                let inputString = Array(repeating: "hello world ", count: 100000).joined(separator: ", ")
@@ -188,14 +188,14 @@ extension Foundation.Data {
     }
 }
 
-extension gzipTests {
+extension GZIPTests {
     static var allTests = [
-        ("testCompressAndUncompress_NSData", testCompressAndUncompress_NSData),
+        ("testCompressAndUncompress_Data", testCompressAndUncompress_Data),
         ("testEmpty", testEmpty),
         ("testDecompress_IncorrectData", testDecompress_IncorrectData),
         ("testUncompressGzip_Fixture", testUncompressGzip_Fixture),
         ("testCompressGzip_Fixture", testCompressGzip_Fixture),
-        ("testPerformance_NSData", testPerformance_NSData),
+        ("testPerformance_Data", testPerformance_Data),
         ("testPerformance_FoundationData", testPerformance_FoundationData),
         ("testChunks_compress", testChunks_compress),
 //        ("testChunks_compress_flushWithEmpty", testChunks_compress_flushWithEmpty),
