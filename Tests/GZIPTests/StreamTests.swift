@@ -142,11 +142,13 @@ public final class DrainStream: Axis.InputStream {
 }
 
 extension StreamTests {
-    static var allTests = [
-        ("testCompressAndUncompress_Data", testCompressAndUncompress_Data),
-        ("testStream_Uncompress_Data", testStream_Uncompress_Data),
-        ("testStream_Compress_Data", testStream_Compress_Data),
-        ("testLarge_Stream_Identity", testLarge_Stream_Identity),
-        ("testPerformance_Data", testPerformance_Data)
-    ]
+    public static var allTests: [(String, (StreamTests) -> () throws -> Void)] {
+        return [
+            ("testCompressAndUncompress_Data", testCompressAndUncompress_Data),
+            ("testStream_Uncompress_Data", testStream_Uncompress_Data),
+            ("testStream_Compress_Data", testStream_Compress_Data),
+            ("testLarge_Stream_Identity", testLarge_Stream_Identity),
+            ("testPerformance_Data", testPerformance_Data)
+        ]
+    }
 }

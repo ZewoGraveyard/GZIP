@@ -189,16 +189,18 @@ extension Foundation.Data {
 }
 
 extension GZIPTests {
-    static var allTests = [
-        ("testCompressAndUncompress_Data", testCompressAndUncompress_Data),
-        ("testEmpty", testEmpty),
-        ("testDecompress_IncorrectData", testDecompress_IncorrectData),
-        ("testUncompressGzip_Fixture", testUncompressGzip_Fixture),
-        ("testCompressGzip_Fixture", testCompressGzip_Fixture),
-        ("testPerformance_Data", testPerformance_Data),
-        ("testPerformance_FoundationData", testPerformance_FoundationData),
-        ("testChunks_compress", testChunks_compress),
-//        ("testChunks_compress_flushWithEmpty", testChunks_compress_flushWithEmpty),
-        ("testChunks_uncompress", testChunks_uncompress)
-    ]
+    public static var allTests: [(String, (GZIPTests) -> () throws -> Void)] {
+        return [
+            ("testCompressAndUncompress_Data", testCompressAndUncompress_Data),
+            ("testEmpty", testEmpty),
+            ("testDecompress_IncorrectData", testDecompress_IncorrectData),
+            ("testUncompressGzip_Fixture", testUncompressGzip_Fixture),
+            ("testCompressGzip_Fixture", testCompressGzip_Fixture),
+            ("testPerformance_Data", testPerformance_Data),
+            ("testPerformance_FoundationData", testPerformance_FoundationData),
+            ("testChunks_compress", testChunks_compress),
+    //        ("testChunks_compress_flushWithEmpty", testChunks_compress_flushWithEmpty),
+            ("testChunks_uncompress", testChunks_uncompress)
+        ]
+    }
 }
