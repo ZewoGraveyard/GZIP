@@ -25,11 +25,11 @@ final class GzipUncompressor: GzipProcessor {
         }
     }
     
-    func process(data: NSData, isLast: Bool) throws -> NSData {
+    func process(data: Data, isLast: Bool) throws -> Data {
         let mode = isLast ? Z_FINISH : Z_SYNC_FLUSH
-        let processChunk: () -> Int32 = { return inflate(&self._stream.pointee, mode) }
-        let loop: (_ result: Int32) -> Bool = { _ in self._stream.pointee.avail_in > 0 }
-        let shouldEnd: (_ result: Int32) -> Bool = { _ in isLast }
+        let processChunk: () -> Int32 = { inflate(&self._stream.pointee, mode) }
+        let loop: (Int32) -> Bool = { _ in self._stream.pointee.avail_in > 0 }
+        let shouldEnd: (Int32) -> Bool = { _ in isLast }
         let end: () -> () = { inflateEnd(&self._stream.pointee) }
         return try self._process(data: data, processChunk: processChunk, loop: loop, shouldEnd: shouldEnd, end: end)
     }
@@ -72,14 +72,11 @@ final class GzipCompressor: GzipProcessor {
         }
     }
     
-    func process(data: NSData, isLast: Bool) throws -> NSData {
+    func process(data: Data, isLast: Bool) throws -> Data {
         let mode = isLast ? Z_FINISH : Z_SYNC_FLUSH
-        let processChunk: () -> Int32 = { return deflate(&self._stream.pointee, mode) }
-        let loop: (_ result: Int32) -> Bool = { result in
-            let fullOutput = self._stream.pointee.avail_out == 0
-            let finishAndOk = mode == Z_FINISH && result == Z_OK
-            return fullOutput || finishAndOk
-        }
+        let processChunk: () -> Int32 = {
+            deflate(&self._stream.pointee, mode) }
+        let loop: (Int32) -> Bool = { _ in self._stream.pointee.avail_out == 0 }
         let shouldEnd: (_ result: Int32) -> Bool = { _ in isLast }
         let end: () -> () = { deflateEnd(&self._stream.pointee) }
         return try self._process(data: data, processChunk: processChunk, loop: loop, shouldEnd: shouldEnd, end: end)
@@ -108,56 +105,40 @@ func _makeStream() -> UnsafeMutablePointer<z_stream> {
 
 extension GzipProcessor {
     
-    /// Call before closing the stream, to ensure all data has been sent out.
-    public func safeFlush() throws -> NSData? {
-        guard !closed else { return nil }
-        return try flush()
-    }
-    
-    /// Call when all data has been submitted, but none of the calls
-    /// contains "last: true", meaning there might still be buffered data.
-    /// Not safe to call if stream is already closed. 
-    /// Use safeFlush() if you're unsure if the stream is closed
-    public func flush() throws -> NSData {
-        return try self.process(data: NSData(), isLast: true)
-    }
-    
     func _clearMemory() {
         _stream.deinitialize(count: 1)
         _stream.deallocate(capacity: 1)
     }
     
-    func _process(data: NSData,
+    func _process(data: Data,
                   processChunk: () -> Int32,
-                  loop: (_ result: Int32) -> Bool,
-                  shouldEnd: (_ result: Int32) -> Bool,
-                  end: () -> ()) throws -> NSData {
+                  loop: (Int32) -> Bool,
+                  shouldEnd: (Int32) -> Bool,
+                  end: () -> ()) throws -> Data {
+        guard data.count > 0 else { return Data() }
         
-        let mutableInputBytes = UnsafeMutableRawPointer(mutating: data.bytes)
-        let rawInput = mutableInputBytes.bindMemory(to: Bytef.self, capacity: data.length)
-        _stream.pointee.next_in = rawInput
-        _stream.pointee.avail_in = uInt(data.length)
+        _stream.pointee.next_in = data.withUnsafeBytes { (input: UnsafePointer<Bytef>) in UnsafeMutablePointer<Bytef>(mutating: input) }
         
-        guard let output = NSMutableData(capacity: CHUNK_SIZE) else {
-            throw GzipError.memory(message: "Not enough memory")
-        }
-        output.length = CHUNK_SIZE
+        _stream.pointee.avail_in = uInt(data.count)
+        
+        var output = Data(capacity: CHUNK_SIZE)
+        output.count = CHUNK_SIZE
         
         let chunkStart = _stream.pointee.total_out
         
         var result: Int32 = 0
         repeat {
             
-            if _stream.pointee.total_out >= uLong(output.length) {
-                output.length += CHUNK_SIZE;
+            if _stream.pointee.total_out >= uLong(output.count) {
+                output.count += CHUNK_SIZE;
             }
             
             let writtenThisChunk = _stream.pointee.total_out - chunkStart
-            let availOut = uLong(output.length) - writtenThisChunk
+            let availOut = uLong(output.count) - writtenThisChunk
             _stream.pointee.avail_out = uInt(availOut)
-            
-            let writingBuffer = output.mutableBytes.assumingMemoryBound(to: Bytef.self)
-            _stream.pointee.next_out = writingBuffer.advanced(by: Int(writtenThisChunk))
+            _stream.pointee.next_out = output.withUnsafeMutableBytes{ (out: UnsafeMutablePointer<Bytef>) in
+                out.advanced(by: Int(writtenThisChunk))
+            }
             
             result = processChunk()
             guard result >= 0 || (result == Z_BUF_ERROR && _stream.pointee.avail_out == 0) else {
@@ -174,7 +155,7 @@ extension GzipProcessor {
             closed = true
         }
         let chunkCount = _stream.pointee.total_out - chunkStart
-        output.length = Int(chunkCount)
+        output.count = Int(chunkCount)
         return output
     }
 }

@@ -1,6 +1,8 @@
 import XCTest
-@testable import gzipTests
+@testable import GZIPTests
 
 XCTMain([
-	 testCase(gzipTests.allTests),
+	 testCase(GZIPTests.allTests),
+	 testCase(GzipMiddlewareTests.allTests),
+	 testCase(StreamTests.allTests),
 ])
